@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+}
+/* Remove default margin and padding */
+body, html {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Optional: make everything fit full width/height */
+* {
+  box-sizing: inherit;
+}

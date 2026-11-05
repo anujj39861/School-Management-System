@@ -1,0 +1,176 @@
+Student Management System - Backend API Overview
+
+Base URL: http://localhost:5001
+
+Auth
+- Admin auth: POST /admin/api/auth/login
+  Input: { email, password }
+  Response: { message, token, user { id, name, email, phone, address, logo_url, subscription_plan } }
+- Teacher auth: POST /teacher/auth/login
+  Input: { username, password }
+  Response: { success, message, data: { token, teacher { ...profile } } }
+- Student auth: POST /student/auth/login
+  Input: { username, password }
+  Response: { success, message, data: { token, student { id, student_id, name, class, section, school_id, username } } }
+
+Admin (JWT required: Authorization: Bearer <token>)
+- Teachers
+  - GET /admin/teacher or /admin/teacher/getALL
+    Response: { success, data: Teacher[], count }
+  - GET /admin/teacher/get/:id
+    Response: { success, data: Teacher } | 404
+  - POST /admin/teacher/create
+    Body: { name, email, password, teacher_id, ... }
+    Response: 201 { success, message, data: { id, teacher_id, username, name, email } } | 409/400
+  - PUT /admin/teacher/update/:id
+    Body: { name, email, ... }
+    Response: { success, message } | 404/409/400
+  - DELETE /admin/teacher/delete/:id
+    Response: { success, message } | 404
+  - PUT /admin/teacher/deactivate/:id
+    Response: { success, message } | 404
+
+- Students
+  - POST /admin/student/create
+    Body: Student fields
+    Response: 201 { success, message, data } | 409/400
+  - GET /admin/student/getallstudents
+    Response: { success, message, data: Student[] }
+  - GET /admin/student/getstudent/:id
+    Response: { success, message, data: Student } | 404
+  - PUT /admin/student/updatestudent/:id
+    Body: Partial student
+    Response: { success, message, data } | 404/400
+  - DELETE /admin/student/deletestudent/:id
+    Response: { success, message, data } | 404/400
+
+- Attendance
+  - POST /admin/attendance/create
+    Body: { student_id, class, section, subject, date, status, teacher_id }
+    Response: 201 { success, message, data } | 400/404/409
+  - POST /admin/attendance/bulk-create
+    Body: { attendance_records: [...] }
+    Response: 201 or 207 { success, message, data }
+  - GET /admin/attendance
+    Query: student_id, subject, date, status, teacher_id, class, section, start_date, end_date
+    Response: { success, message, data }
+  - GET /admin/attendance/stats
+    Query: student_id, subject, class, section, start_date, end_date
+    Response: { success, message, data }
+  - GET /admin/attendance/:id
+    Response: { success, message, data } | 404/400
+  - PUT /admin/attendance/:id
+    Body: partial fields
+    Response: { success, message, data } | 400/404/409
+  - DELETE /admin/attendance/:id
+    Response: { success, message, data } | 404/400
+
+- Timetable
+  - GET /admin/timetable/classes
+    Response: { success, message, data: Class[] }
+  - GET /admin/timetable/timetable/:classId
+    Response: { success, message, data } | 404
+  - POST /admin/timetable/create
+    Body: { classId, className, schoolDays[], timetable }
+    Response: 201 { success, message, data } | 400
+  - POST /admin/timetable/create/slot
+    Body: { classId, className, schoolDays[], day, timeSlot, subject, teacher, room }
+    Response: 201 { success, message, data } | 400
+  - PUT /admin/timetable/update/:classId
+    Body: { schoolDays[], timetable }
+    Response: { success, message, data } | 400
+  - DELETE /admin/timetable/delete/slot
+    Body: { classId, day, timeSlot }
+    Response: { success, message, data } | 400
+  - DELETE /admin/timetable/delete/:classId
+    Response: { success, message, data }
+
+- Fees
+  - POST /admin/fees/createfees
+    Body: fee fields
+    Response: 201 { success, message, data } | 500
+  - GET /admin/fees/getallfees
+    Response: { success, message, data }
+  - GET /admin/fees/getfees/:id
+    Response: { success, message, data } | 404
+  - PUT /admin/fees/updatefees/:id
+    Body: partial fee fields
+    Response: { success, message, data } | 404
+  - DELETE /admin/fees/deletefees/:id
+    Response: { success, message, data } | 404
+
+Teacher (JWT required: Authorization: Bearer <token>)
+- GET /teacher/students
+  Query: class, section, subject
+  Response: { success, message, data }
+- GET /teacher/students/:class/:subject
+  Response: { success, message, data } | 400/403
+- GET /teacher/assignments
+  Response: { success, message, data }
+- GET /teacher/profile
+  Response: { success, message, data } | 404
+
+Attendance (teacher)
+- POST /teacher/attendance/mark
+  Body: { student_id, class_id, subject, date, status }
+  Response: { success, message, data } | 400
+- POST /teacher/attendance/bulk-mark or /mark-bulk
+  Body: { class_id, subject, date, attendance_records[] }
+  Response: { success, message, data } | 400/404
+- GET /teacher/attendance/records
+  Query: class_id, subject, date, status, start_date, end_date, student_id
+  Response: { success, message, data, count }
+- GET /teacher/attendance/stats or /statistics
+  Query: class_id, subject, start_date, end_date, date
+  Response: { success, message, data }
+- GET /teacher/attendance/students/:class_id/:subject
+  Response: { success, message, data, count } | 400/403
+
+Timetable (teacher)
+- GET /teacher/timetable
+  Response: { success, data, count }
+- GET /teacher/timetable/day/:day
+  Response: { success, data, day, count } | 400
+- GET /teacher/timetable/today
+  Response: { success, data, day, count }
+- GET /teacher/timetable/current
+  Response: { success, data }
+- GET /teacher/timetable/weekly-summary
+  Response: { success, data }
+- GET /teacher/classes
+  Response: { success, data, count }
+- GET /teacher/subjects
+  Response: { success, data, count }
+- GET /teacher/teaching-stats
+  Response: { success, data }
+- GET /teacher/free-periods/:day
+  Response: { success, data, day, count } | 400
+- GET /teacher/timetable/conflicts
+  Response: { success, data, count, hasConflicts }
+
+Teacher profile (teacher)
+- GET /teacher/profile
+  Response: { success, data } | 404
+- PUT /teacher/profile
+  Body: { name, email, phone?, address?, qualification?, experience_years?, profile_pic_url? }
+  Response: { success, message } | 400
+- PUT /teacher/change-password
+  Body: { currentPassword, newPassword, confirmPassword }
+  Response: { success, message } | 400
+- GET /teacher/classes-subjects
+  Response: { success, data } | 404
+- GET /teacher/stats
+  Response: { success, data } | 404
+- POST /teacher/update-last-login
+  Response: { success, message, updated }
+
+Student
+- POST /student/auth/login
+  Body: { username, password }
+  Response: { success, message, data: { token, student { ... } } }
+
+Notes
+- All protected endpoints require Authorization header: Bearer <JWT>.
+- JWT payload contains role and school_id; middleware enforces role-specific access.
+- Dates use YYYY-MM-DD format; many routes validate and return 400 on invalid.
+- Common error codes: 400 (validation), 401 (auth), 403 (role/ownership), 404 (not found), 409 (conflict), 500 (server).
